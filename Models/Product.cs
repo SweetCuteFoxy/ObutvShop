@@ -23,6 +23,5 @@ public class Product
     public Manufacturer Manufacturer { get; set; } = null!;
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
-    /// <summary>Цена со скидкой</summary>
     public decimal PriceDiscounted => Math.Round(Price * (1 - DiscountPct / 100m), 2);
 }

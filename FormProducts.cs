@@ -14,38 +14,25 @@ public partial class FormProducts : Form
     {
         _currentUser = currentUser;
         InitializeComponent();
-        SetupUserInfo();
-        SetupFilter();
-        dataGridViewProducts.CellFormatting += DataGridView_CellFormatting;
-        Load += FormProducts_Load;
-    }
 
-    private void SetupUserInfo()
-    {
         if (_currentUser != null)
             labelUserInfo.Text = $"{_currentUser.FullName} ({_currentUser.Role.Name})";
         else
             labelUserInfo.Text = "Гость";
-    }
 
-    private void SetupFilter()
-    {
         comboBoxFilter.Items.AddRange(new object[]
         {
-            "Все скидки",
-            "0 – 5%",
-            "5 – 15%",
-            "15 – 30%",
-            "30 – 70%",
-            "70 – 100%"
+            "Все",
+            "0-5%",
+            "5-15%",
+            "15-30%",
+            "30-70%",
+            "70-100%"
         });
         comboBoxFilter.SelectedIndex = 0;
-    }
 
-    private void FormProducts_Load(object? sender, EventArgs e)
-    {
-        LoadProducts();
-        _isLoaded = true;
+        dataGridViewProducts.CellFormatting += DataGridView_CellFormatting;
+        Load += (_, _) => { LoadProducts(); _isLoaded = true; };
     }
 
     private void LoadProducts()
@@ -57,7 +44,6 @@ public partial class FormProducts : Form
                 .Include(p => p.Category)
                 .Include(p => p.Supplier)
                 .Include(p => p.Manufacturer)
-                .Where(p => p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToList();
             _totalCount = _allProducts.Count;
@@ -65,8 +51,8 @@ public partial class FormProducts : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка загрузки данных:\n{ex.Message}",
-                "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show("Ошибка загрузки: " + ex.Message, "Ошибка",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -75,7 +61,7 @@ public partial class FormProducts : Form
         var filtered = _allProducts.AsEnumerable();
 
         string search = textBoxSearch.Text.Trim();
-        if (!string.IsNullOrEmpty(search))
+        if (search.Length > 0)
         {
             filtered = filtered.Where(p =>
                 p.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
@@ -84,8 +70,8 @@ public partial class FormProducts : Form
                 p.Manufacturer.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
         }
 
-        int filterIndex = comboBoxFilter.SelectedIndex;
-        filtered = filterIndex switch
+        int fi = comboBoxFilter.SelectedIndex;
+        filtered = fi switch
         {
             1 => filtered.Where(p => p.DiscountPct >= 0 && p.DiscountPct < 5),
             2 => filtered.Where(p => p.DiscountPct >= 5 && p.DiscountPct < 15),
@@ -95,40 +81,30 @@ public partial class FormProducts : Form
             _ => filtered
         };
 
-        DisplayProducts(filtered.ToList());
-    }
+        var list = filtered.ToList();
 
-    private void DisplayProducts(List<Product> products)
-    {
-        dataGridViewProducts.DataSource = products.Select(p => new
+        dataGridViewProducts.DataSource = list.Select(p => new
         {
             Артикул = p.Article,
             Наименование = p.Name,
             Категория = p.Category.Name,
             Производитель = p.Manufacturer.Name,
-            Цена = p.Price.ToString("N2") + " ₽",
-            Скидка = p.DiscountPct + "%",
-            ЦенаСоСкидкой = p.PriceDiscounted.ToString("N2") + " ₽",
-            Остаток = p.StockQty,
-            _DiscountRaw = p.DiscountPct
+            Цена = p.Price,
+            Скидка = p.DiscountPct,
+            СоСкидкой = p.PriceDiscounted,
+            Остаток = p.StockQty
         }).ToList();
 
-        if (dataGridViewProducts.Columns.Contains("_DiscountRaw"))
-            dataGridViewProducts.Columns["_DiscountRaw"]!.Visible = false;
-
-        labelCount.Text = $"Записей: {products.Count} из {_totalCount}";
+        labelCount.Text = $"{list.Count} из {_totalCount}";
     }
 
     private void DataGridView_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
     {
         if (e.RowIndex < 0) return;
+        if (!dataGridViewProducts.Columns.Contains("Скидка")) return;
 
-        var row = dataGridViewProducts.Rows[e.RowIndex];
-        if (row.Cells.Count == 0 || !dataGridViewProducts.Columns.Contains("_DiscountRaw"))
-            return;
-
-        var val = row.Cells["_DiscountRaw"].Value;
-        if (val is decimal discount && discount > 15)
+        var val = dataGridViewProducts.Rows[e.RowIndex].Cells["Скидка"].Value;
+        if (val is decimal d && d > 15)
         {
             e.CellStyle.BackColor = Color.FromArgb(46, 139, 87);
             e.CellStyle.ForeColor = Color.White;
@@ -145,5 +121,11 @@ public partial class FormProducts : Form
     private void ComboBoxFilter_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_isLoaded) ApplyFilters();
+    }
+
+    private void ButtonOrders_Click(object? sender, EventArgs e)
+    {
+        using var form = new FormOrders(_currentUser);
+        form.ShowDialog();
     }
 }
