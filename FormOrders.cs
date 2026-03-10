@@ -10,6 +10,17 @@ public partial class FormOrders : Form
     private int _totalCount;
     private bool _isLoaded;
 
+    private static readonly Dictionary<string, Color> StatusColors = new()
+    {
+        ["Новый"] = Color.FromArgb(33, 150, 243),
+        ["Подтверждён"] = Color.FromArgb(156, 39, 176),
+        ["Оплачен"] = Color.FromArgb(255, 152, 0),
+        ["Отправлен"] = Color.FromArgb(0, 150, 136),
+        ["Завершён"] = Color.FromArgb(76, 175, 80),
+        ["Отменён"] = Color.FromArgb(244, 67, 54),
+        ["Возврат"] = Color.FromArgb(158, 158, 158),
+    };
+
     public FormOrders(User? currentUser)
     {
         _currentUser = currentUser;
@@ -20,6 +31,7 @@ public partial class FormOrders : Form
         else
             labelUserInfo.Text = "Гость";
 
+        dataGridViewOrders.CellFormatting += DataGridViewOrders_CellFormatting;
         Load += (_, _) => { LoadStatuses(); LoadOrders(); _isLoaded = true; };
     }
 
@@ -29,7 +41,7 @@ public partial class FormOrders : Form
         {
             using var db = new ObutvShopContext();
             var statuses = db.OrderStatuses.OrderBy(s => s.Id).ToList();
-            comboBoxStatus.Items.Add("Все");
+            comboBoxStatus.Items.Add("Все статусы");
             foreach (var s in statuses)
                 comboBoxStatus.Items.Add(s.Name);
             comboBoxStatus.SelectedIndex = 0;
@@ -79,8 +91,8 @@ public partial class FormOrders : Form
         int si = comboBoxStatus.SelectedIndex;
         if (si > 0)
         {
-            string statusName = comboBoxStatus.Items[si].ToString()!;
-            filtered = filtered.Where(o => o.Status.Name == statusName);
+            string? statusName = comboBoxStatus.Items[si]?.ToString();
+            if (statusName != null) filtered = filtered.Where(o => o.Status.Name == statusName);
         }
 
         var list = filtered.ToList();
@@ -90,18 +102,32 @@ public partial class FormOrders : Form
             Номер = o.OrderNum,
             Дата = o.OrderDate?.ToString("dd.MM.yyyy") ?? "",
             Доставка = o.DeliveryDate?.ToString("dd.MM.yyyy") ?? "",
-            ПунктВыдачи = o.PickupPoint?.Address ?? "",
             Клиент = o.User?.FullName ?? "Гость",
             Позиций = o.OrderItems.Count,
             Сумма = o.OrderItems.Sum(i => i.Quantity * i.Product.PriceDiscounted),
             Статус = o.Status.Name,
+            ПунктВыдачи = o.PickupPoint?.Address ?? "",
             _OrderNum = o.OrderNum
         }).ToList();
 
         if (dataGridViewOrders.Columns.Contains("_OrderNum"))
             dataGridViewOrders.Columns["_OrderNum"]!.Visible = false;
 
-        labelCount.Text = $"{list.Count} из {_totalCount}";
+        labelCount.Text = $"Показано {list.Count} из {_totalCount} заказов";
+    }
+
+    private void DataGridViewOrders_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (e.RowIndex < 0) return;
+        if (!dataGridViewOrders.Columns.Contains("Статус")) return;
+        if (dataGridViewOrders.Columns[e.ColumnIndex].Name != "Статус") return;
+
+        var val = e.Value?.ToString();
+        if (val != null && StatusColors.TryGetValue(val, out var color))
+        {
+            e.CellStyle.ForeColor = color;
+            e.CellStyle.Font = new Font(e.CellStyle.Font ?? dataGridViewOrders.Font, FontStyle.Bold);
+        }
     }
 
     private void DataGridViewOrders_SelectionChanged(object? sender, EventArgs e)
@@ -115,6 +141,7 @@ public partial class FormOrders : Form
             var order = _allOrders.FirstOrDefault(o => o.OrderNum == orderNum);
             if (order != null)
             {
+                labelItems.Text = $"  Состав заказа #{order.OrderNum}";
                 dataGridViewItems.DataSource = order.OrderItems.Select(i => new
                 {
                     Артикул = i.Product.Article,

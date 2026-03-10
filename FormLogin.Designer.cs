@@ -16,7 +16,7 @@ namespace ObutvShop
         private void InitializeComponent()
         {
             panelMain = new Panel();
-            labelIcon = new Label();
+            pictureBoxLogo = new PictureBox();
             labelTitle = new Label();
             labelSubtitle = new Label();
             labelLogin = new Label();
@@ -30,13 +30,14 @@ namespace ObutvShop
             labelError = new Label();
 
             panelMain.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxLogo).BeginInit();
             SuspendLayout();
 
             // panelMain
             panelMain.Anchor = AnchorStyles.None;
             panelMain.BackColor = Color.White;
             panelMain.Name = "panelMain";
-            panelMain.Controls.Add(labelIcon);
+            panelMain.Controls.Add(pictureBoxLogo);
             panelMain.Controls.Add(labelTitle);
             panelMain.Controls.Add(labelSubtitle);
             panelMain.Controls.Add(labelLogin);
@@ -48,14 +49,16 @@ namespace ObutvShop
             panelMain.Controls.Add(buttonLogin);
             panelMain.Controls.Add(buttonGuest);
             panelMain.Controls.Add(labelError);
-            panelMain.Size = new Size(420, 520);
+            panelMain.Size = new Size(420, 530);
 
-            // labelIcon - shoe emoji as logo replacement
-            labelIcon.Font = new Font("Segoe UI Emoji", 40F);
-            labelIcon.Location = new Point(160, 20);
-            labelIcon.Size = new Size(100, 70);
-            labelIcon.Text = "\U0001F45F";
-            labelIcon.TextAlign = ContentAlignment.MiddleCenter;
+            // pictureBoxLogo
+            pictureBoxLogo.Location = new Point(160, 20);
+            pictureBoxLogo.Size = new Size(100, 70);
+            pictureBoxLogo.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureBoxLogo.BackColor = Color.White;
+            var logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Icon.ico");
+            if (File.Exists(logoPath))
+                pictureBoxLogo.Image = Image.FromFile(logoPath);
 
             // labelTitle
             labelTitle.Font = new Font("Times New Roman", 20F, FontStyle.Bold);
@@ -152,18 +155,26 @@ namespace ObutvShop
             Controls.Add(panelMain);
             Name = "FormLogin";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Авторизация";
+            Text = "Авторизация - Магазин обуви";
             WindowState = FormWindowState.Maximized;
+
+            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Icon.ico");
+            if (File.Exists(iconPath))
+            {
+                using var bmp = new Bitmap(iconPath);
+                Icon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
+            }
 
             panelMain.ResumeLayout(false);
             panelMain.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxLogo).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
 
         private Panel panelMain;
-        private Label labelIcon;
+        private PictureBox pictureBoxLogo;
         private Label labelTitle;
         private Label labelSubtitle;
         private Label labelLogin;
