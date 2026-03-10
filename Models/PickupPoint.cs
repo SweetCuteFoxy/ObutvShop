@@ -1,6 +1,6 @@
 namespace ObutvShop.Models;
 
-public class PickupPoint
+public class DeliveryPoint
 {
     public int Id { get; set; }
     public string Address { get; set; } = null!;

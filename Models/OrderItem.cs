@@ -1,9 +1,9 @@
 namespace ObutvShop.Models;
 
-public class OrderItem
+public class ProductOrder
 {
     public int Id { get; set; }
-    public int OrderNum { get; set; }
+    public int OrderId { get; set; }
     public int ProductId { get; set; }
     public int Quantity { get; set; }
 

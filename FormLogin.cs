@@ -81,12 +81,6 @@ public partial class FormLogin : Form
                 return;
             }
 
-            if (!user.IsActive)
-            {
-                labelError.Text = "Учётная запись заблокирована";
-                return;
-            }
-
             AuthenticatedUser = user;
             DialogResult = DialogResult.OK;
             Close();

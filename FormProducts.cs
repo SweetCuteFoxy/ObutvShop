@@ -72,10 +72,11 @@ public partial class FormProducts : Form
         {
             using var db = new ObutvShopContext();
             _allProducts = db.Products
+                .Include(p => p.Type)
                 .Include(p => p.Category)
                 .Include(p => p.Supplier)
                 .Include(p => p.Manufacturer)
-                .OrderBy(p => p.Name)
+                .OrderBy(p => p.Description)
                 .ToList();
             _totalCount = _allProducts.Count;
             ApplyFilters();
@@ -95,20 +96,19 @@ public partial class FormProducts : Form
         if (search.Length > 0)
         {
             filtered = filtered.Where(p =>
-                p.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                p.Description.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                 p.Article.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                (p.Description ?? "").Contains(search, StringComparison.OrdinalIgnoreCase) ||
                 p.Manufacturer.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
         }
 
         int di = comboBoxDiscount.SelectedIndex;
         filtered = di switch
         {
-            1 => filtered.Where(p => p.DiscountPct >= 0 && p.DiscountPct < 5),
-            2 => filtered.Where(p => p.DiscountPct >= 5 && p.DiscountPct < 15),
-            3 => filtered.Where(p => p.DiscountPct >= 15 && p.DiscountPct < 30),
-            4 => filtered.Where(p => p.DiscountPct >= 30 && p.DiscountPct < 70),
-            5 => filtered.Where(p => p.DiscountPct >= 70 && p.DiscountPct <= 100),
+            1 => filtered.Where(p => p.Discount >= 0 && p.Discount < 5),
+            2 => filtered.Where(p => p.Discount >= 5 && p.Discount < 15),
+            3 => filtered.Where(p => p.Discount >= 15 && p.Discount < 30),
+            4 => filtered.Where(p => p.Discount >= 30 && p.Discount < 70),
+            5 => filtered.Where(p => p.Discount >= 70 && p.Discount <= 100),
             _ => filtered
         };
 
@@ -132,11 +132,12 @@ public partial class FormProducts : Form
         {
             Фото = p.Photo ?? "",
             Артикул = p.Article,
-            Наименование = p.Name,
+            Наименование = p.Description,
+            Тип = p.Type.Name,
             Категория = p.Category.Name,
             Производитель = p.Manufacturer.Name,
             Цена = p.Price,
-            Скидка = p.DiscountPct,
+            Скидка = p.Discount,
             СоСкидкой = p.PriceDiscounted,
             Остаток = p.StockQty
         }).ToList();
@@ -158,7 +159,7 @@ public partial class FormProducts : Form
         if (dataGridViewProducts.Columns.Contains("Скидка"))
         {
             var val = row.Cells["Скидка"].Value;
-            if (val is decimal d && d > 15)
+            if (val is int d && d > 15)
             {
                 e.CellStyle.BackColor = Color.FromArgb(232, 245, 233);
                 e.CellStyle.SelectionBackColor = Color.FromArgb(200, 230, 201);
