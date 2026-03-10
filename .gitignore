@@ -3,7 +3,7 @@ bin/
 obj/
 *.user
 *.suo
-*.vs/
+.vs/
 *.DotSettings.user
 
 ## IDE

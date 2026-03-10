@@ -117,7 +117,6 @@ namespace ObutvShop
             labelError.ForeColor = Color.Red;
             labelError.Location = new Point(50, 450);
             labelError.Size = new Size(300, 40);
-            labelError.Text = "";
             labelError.TextAlign = ContentAlignment.MiddleCenter;
 
             // FormLogin
@@ -128,7 +127,7 @@ namespace ObutvShop
             Controls.Add(panelMain);
             Name = "FormLogin";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Авторизация — ООО «Обувь»";
+            Text = "Авторизация";
             WindowState = FormWindowState.Maximized;
 
             panelMain.ResumeLayout(false);
