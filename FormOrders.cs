@@ -40,7 +40,7 @@ public partial class FormOrders : Form
         try
         {
             using var db = new ObutvShopContext();
-            var statuses = db.OrderStatuses.OrderBy(s => s.Id).ToList();
+            var statuses = db.Statuses.OrderBy(s => s.Id).ToList();
             comboBoxStatus.Items.Add("Все статусы");
             foreach (var s in statuses)
                 comboBoxStatus.Items.Add(s.Name);
@@ -60,11 +60,11 @@ public partial class FormOrders : Form
             using var db = new ObutvShopContext();
             _allOrders = db.Orders
                 .Include(o => o.Status)
-                .Include(o => o.PickupPoint)
+                .Include(o => o.DeliveryPoint)
                 .Include(o => o.User)
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
-                .OrderByDescending(o => o.OrderNum)
+                .Include(o => o.ProductOrders)
+                    .ThenInclude(po => po.Product)
+                .OrderByDescending(o => o.Code)
                 .ToList();
             _totalCount = _allOrders.Count;
             ApplyFilters();
@@ -84,8 +84,8 @@ public partial class FormOrders : Form
         if (search.Length > 0)
         {
             filtered = filtered.Where(o =>
-                o.OrderNum.ToString().Contains(search) ||
-                (o.User?.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase));
+                o.Code.ToString().Contains(search) ||
+                o.User.FullName.Contains(search, StringComparison.OrdinalIgnoreCase));
         }
 
         int si = comboBoxStatus.SelectedIndex;
@@ -99,19 +99,19 @@ public partial class FormOrders : Form
 
         dataGridViewOrders.DataSource = list.Select(o => new
         {
-            Номер = o.OrderNum,
-            Дата = o.OrderDate?.ToString("dd.MM.yyyy") ?? "",
-            Доставка = o.DeliveryDate?.ToString("dd.MM.yyyy") ?? "",
-            Клиент = o.User?.FullName ?? "Гость",
-            Позиций = o.OrderItems.Count,
-            Сумма = o.OrderItems.Sum(i => i.Quantity * i.Product.PriceDiscounted),
+            Номер = o.Code,
+            Дата = o.OrderDate.ToString("dd.MM.yyyy"),
+            Доставка = o.DeliveryDate.ToString("dd.MM.yyyy"),
+            Клиент = o.User.FullName,
+            Позиций = o.ProductOrders.Count,
+            Сумма = o.ProductOrders.Sum(i => i.Quantity * i.Product.PriceDiscounted),
             Статус = o.Status.Name,
-            ПунктВыдачи = o.PickupPoint?.Address ?? "",
-            _OrderNum = o.OrderNum
+            ПунктВыдачи = o.DeliveryPoint.Address,
+            _OrderCode = o.Code
         }).ToList();
 
-        if (dataGridViewOrders.Columns.Contains("_OrderNum"))
-            dataGridViewOrders.Columns["_OrderNum"]!.Visible = false;
+        if (dataGridViewOrders.Columns.Contains("_OrderCode"))
+            dataGridViewOrders.Columns["_OrderCode"]!.Visible = false;
 
         labelCount.Text = $"Показано {list.Count} из {_totalCount} заказов";
     }
@@ -133,19 +133,19 @@ public partial class FormOrders : Form
     private void DataGridViewOrders_SelectionChanged(object? sender, EventArgs e)
     {
         if (dataGridViewOrders.CurrentRow == null) return;
-        if (!dataGridViewOrders.Columns.Contains("_OrderNum")) return;
+        if (!dataGridViewOrders.Columns.Contains("_OrderCode")) return;
 
-        var val = dataGridViewOrders.CurrentRow.Cells["_OrderNum"].Value;
-        if (val is int orderNum)
+        var val = dataGridViewOrders.CurrentRow.Cells["_OrderCode"].Value;
+        if (val is int orderCode)
         {
-            var order = _allOrders.FirstOrDefault(o => o.OrderNum == orderNum);
+            var order = _allOrders.FirstOrDefault(o => o.Code == orderCode);
             if (order != null)
             {
-                labelItems.Text = $"  Состав заказа #{order.OrderNum}";
-                dataGridViewItems.DataSource = order.OrderItems.Select(i => new
+                labelItems.Text = $"  Состав заказа #{order.Code}";
+                dataGridViewItems.DataSource = order.ProductOrders.Select(i => new
                 {
                     Артикул = i.Product.Article,
-                    Товар = i.Product.Name,
+                    Товар = i.Product.Description,
                     Цена = i.Product.PriceDiscounted,
                     Количество = i.Quantity,
                     Сумма = i.Quantity * i.Product.PriceDiscounted
