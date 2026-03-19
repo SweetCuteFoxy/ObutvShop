@@ -107,8 +107,10 @@ public class SportShopContext : DbContext
             e.Property(o => o.ClientName).HasColumnName("client_name");
             e.Property(o => o.PickupCode).HasColumnName("pickup_code");
             e.Property(o => o.StatusId).HasColumnName("status_id");
+            e.Property(o => o.UserId).HasColumnName("user_id");
             e.HasOne(o => o.PickupPoint).WithMany(pp => pp.Orders).HasForeignKey(o => o.PickupPointId);
             e.HasOne(o => o.Status).WithMany(s => s.Orders).HasForeignKey(o => o.StatusId);
+            e.HasOne(o => o.User).WithMany(u => u.Orders).HasForeignKey(o => o.UserId);
         });
 
         modelBuilder.Entity<OrderItem>(e =>

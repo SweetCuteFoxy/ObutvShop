@@ -9,8 +9,10 @@ public class Order
     public string ClientName { get; set; } = null!;
     public int? PickupCode { get; set; }
     public int StatusId { get; set; }
+    public int UserId { get; set; }
 
     public PickupPoint? PickupPoint { get; set; }
     public OrderStatus? Status { get; set; }
+    public User? User { get; set; }
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

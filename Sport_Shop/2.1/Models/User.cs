@@ -9,4 +9,5 @@ public class User
     public int RoleId { get; set; }
 
     public Role Role { get; set; } = null!;
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
 }
