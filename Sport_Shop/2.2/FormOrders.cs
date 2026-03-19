@@ -13,8 +13,12 @@ public partial class FormOrders : Form
     private static readonly Dictionary<string, Color> StatusColors = new()
     {
         ["Новый"] = Color.FromArgb(33, 150, 243),
-        ["Завершен"] = Color.FromArgb(76, 175, 80),
-        ["Доставляется"] = Color.FromArgb(255, 152, 0),
+        ["Завершён"] = Color.FromArgb(76, 175, 80),
+        ["Отправлен"] = Color.FromArgb(255, 152, 0),
+        ["Оплачен"] = Color.FromArgb(0, 150, 136),
+        ["Подтверждён"] = Color.FromArgb(103, 58, 183),
+        ["Отменён"] = Color.FromArgb(244, 67, 54),
+        ["Возврат"] = Color.FromArgb(158, 158, 158),
     };
 
     public FormOrders(User? currentUser)
@@ -36,7 +40,7 @@ public partial class FormOrders : Form
         try
         {
             using var db = new SportShopContext();
-            var statuses = db.Statuses.OrderBy(s => s.Id).ToList();
+            var statuses = db.OrderStatuses.OrderBy(s => s.Id).ToList();
             comboBoxStatus.Items.Add("Все статусы");
             foreach (var s in statuses)
                 comboBoxStatus.Items.Add(s.Name);
@@ -56,10 +60,11 @@ public partial class FormOrders : Form
             using var db = new SportShopContext();
             _allOrders = db.Orders
                 .Include(o => o.Status)
-                .Include(o => o.DeliveryPoint)
+                .Include(o => o.PickupPoint)
+                .Include(o => o.User)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
-                .OrderByDescending(o => o.Id)
+                .OrderByDescending(o => o.OrderNum)
                 .ToList();
             _totalCount = _allOrders.Count;
             ApplyFilters();
@@ -79,35 +84,35 @@ public partial class FormOrders : Form
         if (search.Length > 0)
         {
             filtered = filtered.Where(o =>
-                o.Id.ToString().Contains(search) ||
-                o.ClientName.Contains(search, StringComparison.OrdinalIgnoreCase));
+                o.OrderNum.ToString().Contains(search) ||
+                (o.User?.FullName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
         int si = comboBoxStatus.SelectedIndex;
         if (si > 0)
         {
             string? statusName = comboBoxStatus.Items[si]?.ToString();
-            if (statusName != null) filtered = filtered.Where(o => o.Status.Name == statusName);
+            if (statusName != null) filtered = filtered.Where(o => o.Status?.Name == statusName);
         }
 
         var list = filtered.ToList();
 
         dataGridViewOrders.DataSource = list.Select(o => new
         {
-            Номер = o.Id,
+            Номер = o.OrderNum,
             Дата = o.OrderDate.ToString("dd.MM.yyyy"),
             Доставка = o.DeliveryDate?.ToString("dd.MM.yyyy") ?? "",
-            Клиент = o.ClientName,
+            Клиент = o.User?.FullName ?? "",
             Код = o.PickupCode,
             Позиций = o.OrderItems.Count,
             Сумма = o.OrderItems.Sum(i => i.Quantity * i.Product.PriceDiscounted),
-            Статус = o.Status.Name,
-            ПунктВыдачи = o.DeliveryPoint.Address,
-            _OrderId = o.Id
+            Статус = o.Status?.Name ?? "",
+            ПунктВыдачи = o.PickupPoint?.Address ?? "",
+            _OrderNum = o.OrderNum
         }).ToList();
 
-        if (dataGridViewOrders.Columns.Contains("_OrderId"))
-            dataGridViewOrders.Columns["_OrderId"]!.Visible = false;
+        if (dataGridViewOrders.Columns.Contains("_OrderNum"))
+            dataGridViewOrders.Columns["_OrderNum"]!.Visible = false;
 
         labelCount.Text = $"Показано {list.Count} из {_totalCount} заказов";
     }
@@ -129,15 +134,15 @@ public partial class FormOrders : Form
     private void DataGridViewOrders_SelectionChanged(object? sender, EventArgs e)
     {
         if (dataGridViewOrders.CurrentRow == null) return;
-        if (!dataGridViewOrders.Columns.Contains("_OrderId")) return;
+        if (!dataGridViewOrders.Columns.Contains("_OrderNum")) return;
 
-        var val = dataGridViewOrders.CurrentRow.Cells["_OrderId"].Value;
-        if (val is int orderId)
+        var val = dataGridViewOrders.CurrentRow.Cells["_OrderNum"].Value;
+        if (val is int orderNum)
         {
-            var order = _allOrders.FirstOrDefault(o => o.Id == orderId);
+            var order = _allOrders.FirstOrDefault(o => o.OrderNum == orderNum);
             if (order != null)
             {
-                labelItems.Text = $"  Состав заказа #{order.Id}";
+                labelItems.Text = $"  Состав заказа #{order.OrderNum}";
                 dataGridViewItems.DataSource = order.OrderItems.Select(i => new
                 {
                     Артикул = i.Product.Article,

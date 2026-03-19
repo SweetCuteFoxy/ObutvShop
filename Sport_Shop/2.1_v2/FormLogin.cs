@@ -73,7 +73,7 @@ public partial class FormLogin : Form
             using var db = new SportShopContext();
             var user = db.Users
                 .Include(u => u.Role)
-                .FirstOrDefault(u => u.Login == login && u.Password == password);
+                .FirstOrDefault(u => u.Login == login && u.PasswordText == password);
 
             if (user == null)
             {

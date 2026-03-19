@@ -75,7 +75,6 @@ public partial class FormProducts : Form
                 .Include(p => p.Category)
                 .Include(p => p.Supplier)
                 .Include(p => p.Manufacturer)
-                .Include(p => p.Measure)
                 .OrderBy(p => p.Name)
                 .ToList();
             _totalCount = _allProducts.Count;
@@ -104,11 +103,11 @@ public partial class FormProducts : Form
         int di = comboBoxDiscount.SelectedIndex;
         filtered = di switch
         {
-            1 => filtered.Where(p => p.Discount >= 0 && p.Discount < 5),
-            2 => filtered.Where(p => p.Discount >= 5 && p.Discount < 15),
-            3 => filtered.Where(p => p.Discount >= 15 && p.Discount < 30),
-            4 => filtered.Where(p => p.Discount >= 30 && p.Discount < 70),
-            5 => filtered.Where(p => p.Discount >= 70 && p.Discount <= 100),
+            1 => filtered.Where(p => p.DiscountPct >= 0 && p.DiscountPct < 5),
+            2 => filtered.Where(p => p.DiscountPct >= 5 && p.DiscountPct < 15),
+            3 => filtered.Where(p => p.DiscountPct >= 15 && p.DiscountPct < 30),
+            4 => filtered.Where(p => p.DiscountPct >= 30 && p.DiscountPct < 70),
+            5 => filtered.Where(p => p.DiscountPct >= 70 && p.DiscountPct <= 100),
             _ => filtered
         };
 
@@ -130,7 +129,7 @@ public partial class FormProducts : Form
 
         dataGridViewProducts.DataSource = list.Select(p => new
         {
-            Фото = p.Image ?? "",
+            Фото = p.Photo ?? "",
             Артикул = p.Article,
             Наименование = p.Name,
             Категория = p.Category.Name,
@@ -138,10 +137,10 @@ public partial class FormProducts : Form
             Производитель = p.Manufacturer.Name,
             Поставщик = p.Supplier.Name,
             Цена = p.Price,
-            Ед = p.Measure.Name,
-            Скидка = p.Discount,
+            Ед = p.Unit,
+            Скидка = p.DiscountPct,
             СоСкидкой = p.PriceDiscounted,
-            Остаток = p.Stock
+            Остаток = p.StockQty
         }).ToList();
 
         if (dataGridViewProducts.Columns.Contains("Фото"))
@@ -158,26 +157,26 @@ public partial class FormProducts : Form
         if (e.RowIndex < 0) return;
         var row = dataGridViewProducts.Rows[e.RowIndex];
 
-        // Скидка > 15% — фон #2E8B57 (морской зелёный)
+        // Скидка > 15% — фон #2EC4B6 (бирюзовый)
         if (dataGridViewProducts.Columns.Contains("Скидка"))
         {
             var val = row.Cells["Скидка"].Value;
-            if (val is decimal d && d > 15)
+            if (val is int d && d > 15)
             {
                 e.CellStyle.BackColor = Color.FromArgb(46, 139, 87);
-                e.CellStyle.SelectionBackColor = Color.FromArgb(38, 120, 75);
-                e.CellStyle.SelectionForeColor = Color.White;
+                e.CellStyle.SelectionBackColor = Color.FromArgb(40, 120, 75);
+                e.CellStyle.SelectionForeColor = Color.Black;
             }
         }
 
-        // Остаток == 0 — фон #7FFF00
+        // Остаток == 0 — фон #E9F5FF
         if (dataGridViewProducts.Columns.Contains("Остаток"))
         {
             var stockVal = row.Cells["Остаток"].Value;
             if (stockVal is int stock && stock == 0)
             {
-                e.CellStyle.BackColor = Color.FromArgb(127, 255, 0);
-                e.CellStyle.SelectionBackColor = Color.FromArgb(100, 220, 0);
+                e.CellStyle.BackColor = Color.FromArgb(0, 250, 154);
+                e.CellStyle.SelectionBackColor = Color.FromArgb(0, 220, 135);
                 e.CellStyle.SelectionForeColor = Color.Black;
             }
         }
@@ -186,7 +185,7 @@ public partial class FormProducts : Form
         if (dataGridViewProducts.Columns[e.ColumnIndex].Name == "Цена")
         {
             var discVal = row.Cells["Скидка"].Value;
-            if (discVal is decimal disc && disc > 0)
+            if (discVal is int disc && disc > 0)
             {
                 e.CellStyle.Font = new Font("Times New Roman", 10F, FontStyle.Strikeout);
                 e.CellStyle.ForeColor = Color.Black;

@@ -17,15 +17,15 @@ public partial class FormLogin : Form
 
         panelMain.Paint += PanelMain_Paint;
 
-        buttonLogin.MouseEnter += (_, _) => buttonLogin.BackColor = Color.FromArgb(0, 208, 128);
-        buttonLogin.MouseLeave += (_, _) => buttonLogin.BackColor = Color.FromArgb(0, 250, 154);
+        buttonLogin.MouseEnter += (_, _) => buttonLogin.BackColor = Color.FromArgb(55, 81, 207);
+        buttonLogin.MouseLeave += (_, _) => buttonLogin.BackColor = Color.FromArgb(67, 97, 238);
 
-        buttonGuest.MouseEnter += (_, _) => { buttonGuest.BackColor = Color.FromArgb(0, 250, 154); buttonGuest.ForeColor = Color.White; };
-        buttonGuest.MouseLeave += (_, _) => { buttonGuest.BackColor = Color.White; buttonGuest.ForeColor = Color.FromArgb(0, 250, 154); };
+        buttonGuest.MouseEnter += (_, _) => { buttonGuest.BackColor = Color.FromArgb(67, 97, 238); buttonGuest.ForeColor = Color.White; };
+        buttonGuest.MouseLeave += (_, _) => { buttonGuest.BackColor = Color.White; buttonGuest.ForeColor = Color.FromArgb(67, 97, 238); };
 
-        textBoxLogin.Enter += (_, _) => panelLoginLine.BackColor = Color.FromArgb(0, 250, 154);
+        textBoxLogin.Enter += (_, _) => panelLoginLine.BackColor = Color.FromArgb(67, 97, 238);
         textBoxLogin.Leave += (_, _) => panelLoginLine.BackColor = Color.FromArgb(200, 200, 200);
-        textBoxPassword.Enter += (_, _) => panelPasswordLine.BackColor = Color.FromArgb(0, 250, 154);
+        textBoxPassword.Enter += (_, _) => panelPasswordLine.BackColor = Color.FromArgb(67, 97, 238);
         textBoxPassword.Leave += (_, _) => panelPasswordLine.BackColor = Color.FromArgb(200, 200, 200);
     }
 
@@ -73,7 +73,7 @@ public partial class FormLogin : Form
             using var db = new SportShopContext();
             var user = db.Users
                 .Include(u => u.Role)
-                .FirstOrDefault(u => u.Login == login && u.Password == password);
+                .FirstOrDefault(u => u.Login == login && u.PasswordText == password);
 
             if (user == null)
             {

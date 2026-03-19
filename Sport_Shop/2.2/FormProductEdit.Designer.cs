@@ -35,8 +35,8 @@ namespace SportShopV22
             comboBoxManufacturer = new ComboBox();
             labelSupplierLabel = new Label();
             comboBoxSupplier = new ComboBox();
-            labelMeasureLabel = new Label();
-            comboBoxMeasure = new ComboBox();
+            labelUnitLabel = new Label();
+            textBoxUnit = new TextBox();
 
             labelPriceLabel = new Label();
             numericPrice = new NumericUpDown();
@@ -168,14 +168,14 @@ namespace SportShopV22
             y += 38;
 
             // Единица измерения
-            labelMeasureLabel.Text = "Ед. измерения:";
-            labelMeasureLabel.Font = new Font("Times New Roman", 10F);
-            labelMeasureLabel.Location = new Point(x1, y + 4);
-            labelMeasureLabel.Size = new Size(130, 22);
-            comboBoxMeasure.Font = new Font("Times New Roman", 10F);
-            comboBoxMeasure.Location = new Point(x2, y);
-            comboBoxMeasure.Size = new Size(200, 28);
-            comboBoxMeasure.DropDownStyle = ComboBoxStyle.DropDownList;
+            labelUnitLabel.Text = "Ед. измерения:";
+            labelUnitLabel.Font = new Font("Times New Roman", 10F);
+            labelUnitLabel.Location = new Point(x1, y + 4);
+            labelUnitLabel.Size = new Size(130, 22);
+            textBoxUnit.Font = new Font("Times New Roman", 10F);
+            textBoxUnit.Location = new Point(x2, y);
+            textBoxUnit.Size = new Size(200, 28);
+            textBoxUnit.BorderStyle = BorderStyle.FixedSingle;
             y += 38;
 
             // Цена
@@ -258,8 +258,8 @@ namespace SportShopV22
             panelMain.Controls.Add(comboBoxManufacturer);
             panelMain.Controls.Add(labelSupplierLabel);
             panelMain.Controls.Add(comboBoxSupplier);
-            panelMain.Controls.Add(labelMeasureLabel);
-            panelMain.Controls.Add(comboBoxMeasure);
+            panelMain.Controls.Add(labelUnitLabel);
+            panelMain.Controls.Add(textBoxUnit);
             panelMain.Controls.Add(labelPriceLabel);
             panelMain.Controls.Add(numericPrice);
             panelMain.Controls.Add(labelDiscountLabel);
@@ -317,8 +317,8 @@ namespace SportShopV22
         private ComboBox comboBoxManufacturer;
         private Label labelSupplierLabel;
         private ComboBox comboBoxSupplier;
-        private Label labelMeasureLabel;
-        private ComboBox comboBoxMeasure;
+        private Label labelUnitLabel;
+        private TextBox textBoxUnit;
         private Label labelPriceLabel;
         private NumericUpDown numericPrice;
         private Label labelDiscountLabel;

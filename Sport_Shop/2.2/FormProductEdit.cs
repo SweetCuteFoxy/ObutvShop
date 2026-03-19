@@ -42,10 +42,6 @@ public partial class FormProductEdit : Form
         comboBoxSupplier.DataSource = db.Suppliers.OrderBy(s => s.Name).ToList();
         comboBoxSupplier.DisplayMember = "Name";
         comboBoxSupplier.ValueMember = "Id";
-
-        comboBoxMeasure.DataSource = db.Measures.OrderBy(m => m.Name).ToList();
-        comboBoxMeasure.DisplayMember = "Name";
-        comboBoxMeasure.ValueMember = "Id";
     }
 
     private void LoadProduct()
@@ -55,7 +51,6 @@ public partial class FormProductEdit : Form
             .Include(x => x.Category)
             .Include(x => x.Manufacturer)
             .Include(x => x.Supplier)
-            .Include(x => x.Measure)
             .FirstOrDefault(x => x.Id == _productId);
 
         if (p == null)
@@ -72,15 +67,15 @@ public partial class FormProductEdit : Form
         textBoxName.Text = p.Name;
         textBoxDescription.Text = p.Description ?? "";
         numericPrice.Value = p.Price;
-        numericDiscount.Value = p.Discount;
-        numericStock.Value = p.Stock;
+        numericDiscount.Value = p.DiscountPct;
+        numericStock.Value = p.StockQty;
         comboBoxCategory.SelectedValue = p.CategoryId;
         comboBoxManufacturer.SelectedValue = p.ManufacturerId;
         comboBoxSupplier.SelectedValue = p.SupplierId;
-        comboBoxMeasure.SelectedValue = p.MeasureId;
+        textBoxUnit.Text = p.Unit;
 
-        _currentImageFile = p.Image;
-        LoadImage(p.Image);
+        _currentImageFile = p.Photo;
+        LoadImage(p.Photo);
     }
 
     private void LoadImage(string? fileName)
@@ -170,12 +165,12 @@ public partial class FormProductEdit : Form
             product.Name = textBoxName.Text.Trim();
             product.Description = string.IsNullOrWhiteSpace(textBoxDescription.Text) ? null : textBoxDescription.Text.Trim();
             product.Price = numericPrice.Value;
-            product.Discount = numericDiscount.Value;
-            product.Stock = (int)numericStock.Value;
+            product.DiscountPct = (int)numericDiscount.Value;
+            product.StockQty = (int)numericStock.Value;
             product.CategoryId = (int)comboBoxCategory.SelectedValue!;
             product.ManufacturerId = (int)comboBoxManufacturer.SelectedValue!;
             product.SupplierId = (int)comboBoxSupplier.SelectedValue!;
-            product.MeasureId = (int)comboBoxMeasure.SelectedValue!;
+            product.Unit = textBoxUnit.Text.Trim();
 
             if (_selectedImagePath != null)
             {
@@ -191,7 +186,7 @@ public partial class FormProductEdit : Form
                 var newFileName = $"{product.Article}{ext}";
                 var destPath = Path.Combine(_imgDir, newFileName);
                 File.Copy(_selectedImagePath, destPath, true);
-                product.Image = newFileName;
+                product.Photo = newFileName;
             }
 
             db.SaveChanges();
