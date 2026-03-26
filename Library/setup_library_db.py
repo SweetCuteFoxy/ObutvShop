@@ -79,21 +79,57 @@ CREATE TABLE book_loans (
 
 print("Таблицы созданы")
 
-# === Загрузка справочников из файлов ===
+# === Загрузка данных из файлов импорта ===
 
 base = r"C:\Users\edikk\Desktop\DEMO_E\Library\Прил_2_ОЗ_КОД 09.02.07-2-2026-М1\import"
 
-# -- Роли --
+# -- Роли (из roles_import.xlsx) --
 roles_map = {}
-for rname in ["Администратор", "Библиотекарь", "Читатель"]:
+wb_roles = openpyxl.load_workbook(f"{base}\\roles_import.xlsx")
+ws_roles = wb_roles.active
+for row in ws_roles.iter_rows(min_row=2, values_only=True):
+    rname = row[0]
+    if not rname:
+        continue
     cur.execute("INSERT INTO roles (name) VALUES (%s) RETURNING id", (rname,))
     roles_map[rname] = cur.fetchone()[0]
+print(f"Ролей: {len(roles_map)}")
 
-# -- Статусы выдачи --
+# -- Статусы выдачи (из loan_statuses_import.xlsx) --
 statuses_map = {}
-for sname in ["На руках", "Возвращена"]:
+wb_st = openpyxl.load_workbook(f"{base}\\loan_statuses_import.xlsx")
+ws_st = wb_st.active
+for row in ws_st.iter_rows(min_row=2, values_only=True):
+    sname = row[0]
+    if not sname:
+        continue
     cur.execute("INSERT INTO loan_statuses (name) VALUES (%s) RETURNING id", (sname,))
     statuses_map[sname] = cur.fetchone()[0]
+print(f"Статусов: {len(statuses_map)}")
+
+# -- Жанры (из genres_import.xlsx) --
+genres_map = {}
+wb_g = openpyxl.load_workbook(f"{base}\\genres_import.xlsx")
+ws_g = wb_g.active
+for row in ws_g.iter_rows(min_row=2, values_only=True):
+    gname = row[0]
+    if not gname:
+        continue
+    cur.execute("INSERT INTO genres (name) VALUES (%s) RETURNING id", (gname,))
+    genres_map[gname] = cur.fetchone()[0]
+print(f"Жанров: {len(genres_map)}")
+
+# -- Издательства (из publishers_import.xlsx) --
+publishers_map = {}
+wb_p = openpyxl.load_workbook(f"{base}\\publishers_import.xlsx")
+ws_p = wb_p.active
+for row in ws_p.iter_rows(min_row=2, values_only=True):
+    pname = row[0]
+    if not pname:
+        continue
+    cur.execute("INSERT INTO publishers (name) VALUES (%s) RETURNING id", (pname,))
+    publishers_map[pname] = cur.fetchone()[0]
+print(f"Издательств: {len(publishers_map)}")
 
 # -- Пользователи --
 wb = openpyxl.load_workbook(f"{base}\\library_users_import.xlsx")
@@ -115,11 +151,9 @@ for row in ws.iter_rows(min_row=2, values_only=True):
 
 print(f"Пользователей: {len(users_map)}")
 
-# -- Книги (жанры и издательства на лету) --
+# -- Книги (из books_import.xlsx) --
 wb2 = openpyxl.load_workbook(f"{base}\\books_import.xlsx")
 ws2 = wb2.active
-genres_map = {}
-publishers_map = {}
 books_map = {}  # isbn -> book_id
 
 for row in ws2.iter_rows(min_row=2, values_only=True):
@@ -130,30 +164,16 @@ for row in ws2.iter_rows(min_row=2, values_only=True):
     isbn = str(isbn).strip()
     title = str(title).strip()
 
-    # жанр
-    if genre not in genres_map:
-        cur.execute("INSERT INTO genres (name) VALUES (%s) ON CONFLICT (name) DO NOTHING RETURNING id", (genre,))
-        res = cur.fetchone()
-        if res:
-            genres_map[genre] = res[0]
-        else:
-            cur.execute("SELECT id FROM genres WHERE name=%s", (genre,))
-            genres_map[genre] = cur.fetchone()[0]
-
-    # издательство
-    if publisher not in publishers_map:
-        cur.execute("INSERT INTO publishers (name) VALUES (%s) ON CONFLICT (name) DO NOTHING RETURNING id", (publisher,))
-        res = cur.fetchone()
-        if res:
-            publishers_map[publisher] = res[0]
-        else:
-            cur.execute("SELECT id FROM publishers WHERE name=%s", (publisher,))
-            publishers_map[publisher] = cur.fetchone()[0]
+    gid = genres_map.get(genre)
+    pid = publishers_map.get(publisher)
+    if gid is None or pid is None:
+        print(f"  skip book {isbn}: genre={genre} publisher={publisher}")
+        continue
 
     cur.execute(
         "INSERT INTO books (isbn, title, author, genre_id, publisher_id, year_published, pages, total_copies, available_copies, annotation) "
         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-        (isbn, title, author, genres_map[genre], publishers_map[publisher],
+        (isbn, title, author, gid, pid,
          int(year), int(pages), int(total), int(avail), annot)
     )
     books_map[isbn] = cur.fetchone()[0]
